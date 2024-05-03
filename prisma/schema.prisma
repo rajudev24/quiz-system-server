@@ -1,0 +1,90 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             Int             @id @default(autoincrement())
+  email          String          @unique
+  password       String
+  role           UserRole        @default(CANDIDATE)
+  createdAt      DateTime        @default(now())
+  questions      Question[]
+  candidatesExam CandidateExam[]
+  exam           Exam[]
+
+  @@map("users")
+}
+
+enum UserRole {
+  CANDIDATE
+  EXAMINER
+}
+
+model Question {
+  id                 Int                 @id @default(autoincrement())
+  question           String
+  questionType       QuestionType        @default(SINGLE)
+  options            Json
+  corretAnswers      Json
+  exmainerId         Int
+  exmainer           User                @relation(fields: [exmainerId], references: [id])
+  marks              Int
+  exams              Exam[] 
+  createdAt          DateTime            @default(now())
+
+  @@map("question_bank")
+}
+
+enum QuestionType {
+  SINGLE
+  MULTIPLE
+}
+
+model Exam {
+  id                Int             @id @default(autoincrement())
+  title             String
+  durationType      DurationType    @default(PerQuestion)
+  duration          Int
+  negativeMarks     Boolean?
+  negativeMarkValue String?
+  numberOfQuestions Int
+  exmainerId        Int
+  exmainer          User            @relation(fields: [exmainerId], references: [id])
+  candidatesExam    CandidateExam[]
+  questions         Question[]  
+  createdAt         DateTime        @default(now())
+ 
+  @@map("exam")
+}
+
+enum DurationType {
+  PerQuestion
+  ExamWise
+}
+
+model CandidateExam {
+  id                 Int                 @id @default(autoincrement())
+  candidate          User                @relation(fields: [candidateId], references: [id])
+  candidateId        Int
+  exam               Exam                @relation(fields: [examId], references: [id])
+  examId             Int
+  rightAnswer        Int
+  wrongAnswer        Int
+  createdAt          DateTime        @default(now())
+  @@map("candidate_exam")
+}
+
+// model CandidateResponse {
+//   id              Int           @id @default(autoincrement())
+//   candidateExam   CandidateExam @relation(fields: [candidateExamId], references: [id])
+//   candidateExamId Int
+//   chosenAnswers   String[]
+//   marksAwarded    Int
+
+//   @@map("candidate_response")
+// }
